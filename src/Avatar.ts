@@ -135,24 +135,26 @@ export function getInitialLetter(name: string): string {
 export function avatarUrlForRoom(room: Room, width: number, height: number, resizeMethod?: ResizeMethod) {
     if (!room) return null; // null-guard
 
+    // If the room has an avatar set, just return it
     if (room.getMxcAvatarUrl()) {
         return mediaFromMxc(room.getMxcAvatarUrl()).getThumbnailOfSourceHttp(width, height, resizeMethod);
     }
 
-    // space rooms cannot be DMs so skip the rest
+    // If this is a space room, it cannot be a DM
     if (SpaceStore.spacesEnabled && room.isSpaceRoom()) return null;
 
-    let otherMember = null;
+    // Look up this room in the list of DM rooms, and find the user ID
     const otherUserId = DMRoomMap.shared().getUserIdForRoomId(room.roomId);
     if (otherUserId) {
-        otherMember = room.getMember(otherUserId);
-    } else {
-        // if the room is not marked as a 1:1, but only has max 2 members
-        // then still try to show any avatar (pref. other member)
-        otherMember = room.getAvatarFallbackMember();
+        // We found it - look for that user's avatar and return it if found
+        const otherMember = room.getMember(otherUserId);
+        if (otherMember?.getMxcAvatarUrl()) {
+            return mediaFromMxc(otherMember.getMxcAvatarUrl()).getThumbnailOfSourceHttp(width, height, resizeMethod);
+        }
     }
-    if (otherMember?.getMxcAvatarUrl()) {
-        return mediaFromMxc(otherMember.getMxcAvatarUrl()).getThumbnailOfSourceHttp(width, height, resizeMethod);
-    }
+
+    // This is not a DM room: we should never use a user's avatar for it,
+    // even if there is only one other user in the room.  See e.g.
+    // https://github.com/vector-im/element-ios/issues/4766
     return null;
 }
