@@ -20,7 +20,13 @@ import { MatrixEvent } from 'matrix-js-sdk/src/models/event';
 import { replaceableComponent } from "../../../utils/replaceableComponent";
 import BaseDialog from "../dialogs/BaseDialog";
 import { IDialogProps } from "../dialogs/IDialogProps";
-import { createMap, LocationBodyContent, locationEventGeoUri, parseGeoUri } from '../messages/MLocationBody';
+import {
+    createMap,
+    isSelfLocation,
+    LocationBodyContent,
+    locationEventGeoUri,
+    parseGeoUri,
+} from '../messages/MLocationBody';
 
 interface IProps extends IDialogProps {
     mxEvent: MatrixEvent;
@@ -50,11 +56,17 @@ export default class LocationViewDialog extends React.Component<IProps, IState> 
             return;
         }
 
+        const markerId = (
+            isSelfLocation(this.props.mxEvent.getContent())
+                ? this.getMarkerId()
+                : null
+        );
+
         this.map = createMap(
             this.coords,
             true,
             this.getBodyId(),
-            this.getMarkerId(),
+            markerId,
             (e: Error) => this.setState({ error: e }),
         );
     }

@@ -17,8 +17,14 @@ limitations under the License.
 import React from 'react';
 import maplibregl from 'maplibre-gl';
 import { logger } from "matrix-js-sdk/src/logger";
-import { LOCATION_EVENT_TYPE } from 'matrix-js-sdk/src/@types/location';
 import { MatrixEvent } from 'matrix-js-sdk/src/models/event';
+import {
+    ASSET_NODE_TYPE,
+    ASSET_TYPE_SELF,
+    ILocationContent,
+    LOCATION_EVENT_TYPE,
+} from 'matrix-js-sdk/src/@types/location';
+import classNames from 'classnames';
 
 import SdkConfig from '../../../SdkConfig';
 import { replaceableComponent } from "../../../utils/replaceableComponent";
@@ -39,7 +45,12 @@ interface IState {
 export default class MLocationBody extends React.Component<IBodyProps, IState> {
     private coords: GeolocationCoordinates;
     private bodyId: string;
-    private markerId: string;
+
+    /**
+     * The ID of the custom marker, or null if we want to use
+     * the default marker.
+     */
+    private markerId?: string;
 
     constructor(props: IBodyProps) {
         super(props);
@@ -47,7 +58,11 @@ export default class MLocationBody extends React.Component<IBodyProps, IState> {
         const randomString = Math.random().toString(16).slice(2, 10);
         const idSuffix = `${props.mxEvent.getId()}_${randomString}`;
         this.bodyId = `mx_MLocationBody_${idSuffix}`;
-        this.markerId = `mx_MLocationBody_marker_${idSuffix}`;
+        if (isSelfLocation(this.props.mxEvent.getContent())) {
+            this.markerId = `mx_MLocationBody_marker_${idSuffix}`;
+        } else {
+            this.markerId = null;
+        }
         this.coords = parseGeoUri(locationEventGeoUri(this.props.mxEvent));
 
         this.state = {
@@ -101,10 +116,16 @@ export default class MLocationBody extends React.Component<IBodyProps, IState> {
     }
 }
 
+export function isSelfLocation(locationContent: ILocationContent): boolean {
+    const asset = ASSET_NODE_TYPE.findIn(locationContent) as { type: string };
+    const assetType = asset?.type ?? ASSET_TYPE_SELF;
+    return assetType == ASSET_TYPE_SELF;
+}
+
 interface ILocationBodyContentProps {
     mxEvent: MatrixEvent;
     bodyId: string;
-    markerId: string;
+    markerId?: string;
     error: Error;
     tooltip?: string;
     onClick?: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
@@ -121,7 +142,12 @@ export function LocationBodyContent(props: ILocationBodyContentProps):
         className="mx_MLocationBody_map"
     />;
 
-    return <div className="mx_MLocationBody">
+    const bodyClasses = classNames(
+        "mx_MLocationBody",
+        { "mx_MLocationBody_hideDefaultMarker": props.markerId },
+    );
+
+    return <div className={bodyClasses}>
         {
             props.error
                 ? <div className="mx_EventTile_tileError mx_EventTile_body">
@@ -140,22 +166,25 @@ export function LocationBodyContent(props: ILocationBodyContentProps):
                 </TooltipTarget>
                 : mapDiv
         }
-        <div className="mx_MLocationBody_marker" id={props.markerId}>
-            <div className="mx_MLocationBody_markerBorder">
-                <MemberAvatar
-                    member={props.mxEvent.sender}
-                    width={27}
-                    height={27}
-                    viewUserOnClick={false}
+        { props.markerId
+            ? <div className="mx_MLocationBody_marker" id={props.markerId}>
+                <div className="mx_MLocationBody_markerBorder">
+                    <MemberAvatar
+                        member={props.mxEvent.sender}
+                        width={27}
+                        height={27}
+                        viewUserOnClick={false}
+                    />
+                </div>
+                <img
+                    className="mx_MLocationBody_pointer"
+                    src={require("../../../../res/img/location/pointer.svg")}
+                    width="9"
+                    height="5"
                 />
             </div>
-            <img
-                className="mx_MLocationBody_pointer"
-                src={require("../../../../res/img/location/pointer.svg")}
-                width="9"
-                height="5"
-            />
-        </div>
+            : null
+        }
         {
             props.zoomButtons
                 ? <ZoomButtons
@@ -207,11 +236,17 @@ export function createMap(
         interactive,
     });
 
-    new maplibregl.Marker({
-        element: document.getElementById(markerId),
-        anchor: 'bottom',
-        offset: [0, -1],
-    })
+    const marker = (
+        markerId
+            ? new maplibregl.Marker({
+                element: document.getElementById(markerId),
+                anchor: 'bottom',
+                offset: [0, -1],
+            })
+            : new maplibregl.Marker()
+    );
+
+    marker
         .setLngLat(coordinates)
         .addTo(map);
 
