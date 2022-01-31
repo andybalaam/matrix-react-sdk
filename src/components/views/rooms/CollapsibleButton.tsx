@@ -21,15 +21,17 @@ import AccessibleTooltipButton from "../elements/AccessibleTooltipButton";
 export interface ICollapsibleButtonProps
     extends ComponentProps<typeof AccessibleTooltipButton>
 {
-    narrowMode: boolean;
+    inOverflowMenu: boolean;
     title: string;
 }
 
-export const CollapsibleButton = ({ narrowMode, title, ...props }: ICollapsibleButtonProps) => {
+export const CollapsibleButton = (
+    { inOverflowMenu, title, ...props }: ICollapsibleButtonProps,
+) => {
     return <AccessibleTooltipButton
         {...props}
-        title={narrowMode ? undefined : title}
-        label={narrowMode ? title : undefined}
+        title={inOverflowMenu ? undefined : title}
+        label={inOverflowMenu ? title : undefined}
     />;
 };
 

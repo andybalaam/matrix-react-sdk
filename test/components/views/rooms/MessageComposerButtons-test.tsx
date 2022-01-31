@@ -34,7 +34,7 @@ const MessageComposerButtons = TestUtils.wrapInMatrixClientContext(
 );
 
 describe("MessageComposerButtons", () => {
-    it("Renders all buttons in wide mode", () => {
+    it("Renders emoji and upload buttons in wide mode", () => {
         const buttons = wrapAndRender(
             <MessageComposerButtons
                 isMenuOpen={false}
@@ -45,12 +45,32 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Create poll",
-            "Upload file",
-            "Share location",
             "Add emoji",
-            "Show Stickers",
-            "Send voice message",
+            "Upload file",
+            "More options",
+        ]);
+    });
+
+    it("Renders other buttons in menu in wide mode", () => {
+        const buttons = wrapAndRender(
+            <MessageComposerButtons
+                isMenuOpen={true}
+                narrowMode={false}
+                showLocationButton={true}
+                showStickersButton={true}
+            />,
+        );
+
+        expect(buttonLabels(buttons)).toEqual([
+            "Add emoji",
+            "Upload file",
+            "More options",
+            [
+                "Create poll",
+                "Share location",
+                "Send a sticker",
+                "Send voice message",
+            ],
         ]);
     });
 
@@ -65,7 +85,7 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Upload file",
+            "Add emoji",
             "More options",
         ]);
     });
@@ -81,12 +101,12 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Upload file",
+            "Add emoji",
             "More options",
             [
+                "Upload file",
                 "Create poll",
                 "Share location",
-                "Add emoji",
                 "Send a sticker",
             ],
         ]);

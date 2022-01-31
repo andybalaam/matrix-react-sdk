@@ -29,15 +29,15 @@ import Modal from '../../../Modal';
 import QuestionDialog from '../dialogs/QuestionDialog';
 import MatrixClientContext from '../../../contexts/MatrixClientContext';
 
-interface IProps extends Pick<ICollapsibleButtonProps, "narrowMode"> {
+interface IProps extends Pick<ICollapsibleButtonProps, "inOverflowMenu"> {
     roomId: string;
     sender: RoomMember;
     menuPosition: AboveLeftOf;
-    narrowMode: boolean;
+    inOverflowMenu: boolean;
 }
 
 export const LocationButton: React.FC<IProps> = (
-    { roomId, sender, menuPosition, narrowMode },
+    { roomId, sender, menuPosition, inOverflowMenu },
 ) => {
     const [menuDisplayed, button, openMenu, closeMenu] = useContextMenu();
     const matrixClient = useContext(MatrixClientContext);
@@ -74,7 +74,7 @@ export const LocationButton: React.FC<IProps> = (
         <CollapsibleButton
             className={className}
             onClick={openMenu}
-            narrowMode={narrowMode}
+            inOverflowMenu={inOverflowMenu}
             title={_t("Share location")}
         />
 
