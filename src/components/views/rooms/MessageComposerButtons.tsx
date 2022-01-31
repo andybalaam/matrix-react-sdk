@@ -171,7 +171,7 @@ const EmojiButton: React.FC<IEmojiButtonProps> = (
             className={className}
             onClick={openMenu}
             inOverflowMenu={inOverflowMenu}
-            title={_t("Add emoji")}
+            title={_t("Emoji")}
         />
         { contextMenu }
     </React.Fragment>;
@@ -251,12 +251,13 @@ class UploadButton extends React.Component<IUploadButtonProps> {
 
     render() {
         const uploadInputStyle = { display: 'none' };
+        const title = _t("Attachment");
         return (
             <AccessibleTooltipButton
                 className="mx_MessageComposer_button mx_MessageComposer_upload"
                 onClick={this.onUploadClick}
-                title={this.props.inOverflowMenu ? null : _t('Upload file')}
-                label={this.props.inOverflowMenu ? _t("Upload file") : null}
+                title={this.props.inOverflowMenu ? null : title}
+                label={this.props.inOverflowMenu ? title : null}
             >
                 <input
                     ref={this.uploadInput}
@@ -271,6 +272,8 @@ class UploadButton extends React.Component<IUploadButtonProps> {
 }
 
 function showStickersButton(props: IProps, inOverflowMenu: boolean): ReactElement {
+    const title = props.isStickerPickerOpen ? _t("Hide stickers") : _t("Sticker");
+
     return (
         props.showStickersButton
             ? <AccessibleTooltipButton
@@ -278,14 +281,8 @@ function showStickersButton(props: IProps, inOverflowMenu: boolean): ReactElemen
                 key="controls_stickers"
                 className="mx_MessageComposer_button mx_MessageComposer_stickers"
                 onClick={() => props.setStickerPickerOpen(!props.isStickerPickerOpen)}
-                title={
-                    inOverflowMenu
-                        ? null
-                        : props.isStickerPickerOpen
-                            ? _t("Hide Stickers")
-                            : _t("Show Stickers")
-                }
-                label={inOverflowMenu ? _t("Send a sticker") : null}
+                title={inOverflowMenu ? null : title}
+                label={inOverflowMenu ? title : null}
             />
             : null
     );
@@ -300,7 +297,7 @@ function voiceRecordingButton(props: IProps, inOverflowMenu: boolean): ReactElem
                 key="voice_message_send"
                 className="mx_MessageComposer_button mx_MessageComposer_voiceMessage"
                 onClick={props.onRecordStartEndClick}
-                title={_t("Send voice message")}
+                title={_t("Voice Message")}
                 inOverflowMenu={inOverflowMenu}
             />
     );
@@ -357,7 +354,7 @@ class PollButton extends React.PureComponent<IPollButtonProps> {
                 className="mx_MessageComposer_button mx_MessageComposer_poll"
                 onClick={this.onCreateClick}
                 inOverflowMenu={this.props.inOverflowMenu}
-                title={_t("Create poll")}
+                title={_t("Poll")}
             />
         );
     }

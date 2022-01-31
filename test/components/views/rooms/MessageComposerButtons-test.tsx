@@ -45,8 +45,8 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Add emoji",
-            "Upload file",
+            "Emoji",
+            "Attachment",
             "More options",
         ]);
     });
@@ -62,14 +62,14 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Add emoji",
-            "Upload file",
+            "Emoji",
+            "Attachment",
             "More options",
             [
-                "Send a sticker",
-                "Send voice message",
-                "Create poll",
-                "Share location",
+                "Sticker",
+                "Voice Message",
+                "Poll",
+                "Location",
             ],
         ]);
     });
@@ -85,7 +85,7 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Add emoji",
+            "Emoji",
             "More options",
         ]);
     });
@@ -101,13 +101,13 @@ describe("MessageComposerButtons", () => {
         );
 
         expect(buttonLabels(buttons)).toEqual([
-            "Add emoji",
+            "Emoji",
             "More options",
             [
-                "Upload file",
-                "Send a sticker",
-                "Create poll",
-                "Share location",
+                "Attachment",
+                "Sticker",
+                "Poll",
+                "Location",
             ],
         ]);
     });

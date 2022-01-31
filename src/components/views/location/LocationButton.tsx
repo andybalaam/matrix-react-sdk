@@ -68,14 +68,12 @@ export const LocationButton: React.FC<IProps> = (
         },
     );
 
-    // TODO: replace ContextMenuTooltipButton with a unified representation of
-    // the header buttons and the right panel buttons
     return <React.Fragment>
         <CollapsibleButton
             className={className}
             onClick={openMenu}
             inOverflowMenu={inOverflowMenu}
-            title={_t("Share location")}
+            title={_t("Location")}
         />
 
         { contextMenu }
