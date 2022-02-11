@@ -19,10 +19,12 @@ import '../../../skinned-sdk';
 import React from "react";
 import { mount, ReactWrapper } from "enzyme";
 import { Room } from "matrix-js-sdk/src/models/room";
+import { M_POLL_KIND_DISCLOSED, PollStartEvent } from 'matrix-events-sdk';
 
 import * as TestUtils from "../../../test-utils";
 import { MatrixClientPeg } from "../../../../src/MatrixClientPeg";
 import _PollCreateDialog from "../../../../src/components/views/elements/PollCreateDialog";
+import {MatrixEvent} from 'matrix-js-sdk/src/models/event';
 const PollCreateDialog = TestUtils.wrapInMatrixClientContext(_PollCreateDialog);
 
 // Fake date to give a predictable snapshot
@@ -61,6 +63,27 @@ describe("PollCreateDialog", () => {
         changeValue(dialog, "Option 2", "The question is meaningless");
         dialog.find("div.mx_PollCreateDialog_addOption").simulate("click");
         changeValue(dialog, "Option 3", "Mu");
+        expect(dialog.html()).toMatchSnapshot();
+    });
+
+    it("renders info from a previous event", () => {
+        const previousEvent: MatrixEvent = new MatrixEvent(
+            PollStartEvent.from(
+                "Poll Q",
+                ["Answer 1", "Answer 2"],
+                M_POLL_KIND_DISCLOSED,
+            ).serialize(),
+        );
+
+        const dialog = mount(
+            <PollCreateDialog
+                room={createRoom()}
+                onFinished={jest.fn()}
+                editingMxEvent={previousEvent}
+            />,
+        );
+
+        expect(submitIsDisabled(dialog)).toBe(false);
         expect(dialog.html()).toMatchSnapshot();
     });
 

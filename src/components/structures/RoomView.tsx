@@ -34,6 +34,7 @@ import { RoomState } from 'matrix-js-sdk/src/models/room-state';
 import { CallState, CallType, MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { throttle } from "lodash";
 import { MatrixError } from 'matrix-js-sdk/src/http-api';
+import { M_POLL_START } from 'matrix-events-sdk';
 
 import shouldHideEvent from '../../shouldHideEvent';
 import { _t } from '../../languageHandler';
@@ -102,6 +103,7 @@ import { RightPanelPhases } from '../../stores/right-panel/RightPanelStorePhases
 import { ActionPayload } from "../../dispatcher/payloads";
 import { KeyBindingAction } from "../../accessibility/KeyboardShortcuts";
 import { ViewRoomPayload } from "../../dispatcher/payloads/ViewRoomPayload";
+import PollCreateDialog from '../views/elements/PollCreateDialog';
 
 const DEBUG = false;
 let debuglog = function(msg: string) {};
