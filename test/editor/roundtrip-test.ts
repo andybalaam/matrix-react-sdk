@@ -87,6 +87,10 @@ describe('editor/roundtrip', function() {
             const markdown = "text message for @room";
             expect(await roundTripMarkdown(markdown)).toEqual(markdown);
         });
+        it('if they contain pills with interesting characters in mxid', async function() {
+            const markdown = "text message for @alice\\\\\\_\\]#>&:hs.example.com";
+            expect(await roundTripMarkdown(markdown)).toEqual(markdown);
+        });
         it('if they contain styling', async function() {
             const markdown = "**bold** and _emphasised_";
             expect(await roundTripMarkdown(markdown)).toEqual(markdown);
@@ -111,71 +115,27 @@ describe('editor/roundtrip', function() {
             const markdown = "saying \n\n> NO\n\n is valid";
             expect(await roundTripMarkdown(markdown)).toEqual(markdown);
         });
+        it('if they contain inline code', async function() {
+            const markdown = "there's no place `127.0.0.1` like";
+            expect(await roundTripMarkdown(markdown)).toEqual(markdown);
+        });
+        it('if they contain just a code block', async function() {
+            const markdown = "```\nfoo(bar).baz();\n\n3\n```";
+            expect(await roundTripMarkdown(markdown)).toEqual(markdown);
+        });
+        it.skip('if they contain just a code block followed by newlines', async function() {
+            const markdown = "```\nfoo(bar).baz();\n\n3\n```\n\n";
+            expect(await roundTripMarkdown(markdown)).toEqual(markdown);
+        });
+        it.skip('if they contain just code block surrounded by text', async function() {
+            const markdown = "```A\nfoo(bar).baz();\n\n3\n```\nB";
+            expect(await roundTripMarkdown(markdown)).toEqual(markdown);
+        });
+        it('if they contain just code block followed by text after a blank line', async function() {
+            const markdown = "```A\nfoo(bar).baz();\n\n3\n```\n\nB";
+            expect(await roundTripMarkdown(markdown)).toEqual(markdown);
+        });
         /*
-        it('quote', function() {
-            const html = '<blockquote><p><em>wise</em><br><strong>words</strong></p></blockquote><p>indeed</p>';
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(6);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "> _wise_" });
-            expect(parts[1]).toStrictEqual({ type: "newline", text: "\n" });
-            expect(parts[2]).toStrictEqual({ type: "plain", text: "> **words**" });
-            expect(parts[3]).toStrictEqual({ type: "newline", text: "\n" });
-            expect(parts[4]).toStrictEqual({ type: "newline", text: "\n" });
-            expect(parts[5]).toStrictEqual({ type: "plain", text: "indeed" });
-        });
-        it('user pill', function() {
-            const html = "Hi <a href=\"https://matrix.to/#/@alice:hs.tld\">Alice</a>!";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(3);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "Hi " });
-            expect(parts[1]).toStrictEqual({ type: "user-pill", text: "Alice", resourceId: "@alice:hs.tld" });
-            expect(parts[2]).toStrictEqual({ type: "plain", text: "!" });
-        });
-        it('user pill with displayname containing backslash', function() {
-            const html = "Hi <a href=\"https://matrix.to/#/@alice:hs.tld\">Alice\\</a>!";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(3);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "Hi " });
-            expect(parts[1]).toStrictEqual({ type: "user-pill", text: "Alice\\", resourceId: "@alice:hs.tld" });
-            expect(parts[2]).toStrictEqual({ type: "plain", text: "!" });
-        });
-        it('user pill with displayname containing opening square bracket', function() {
-            const html = "Hi <a href=\"https://matrix.to/#/@alice:hs.tld\">Alice[[</a>!";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(3);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "Hi " });
-            expect(parts[1]).toStrictEqual({ type: "user-pill", text: "Alice[[", resourceId: "@alice:hs.tld" });
-            expect(parts[2]).toStrictEqual({ type: "plain", text: "!" });
-        });
-        it('user pill with displayname containing closing square bracket', function() {
-            const html = "Hi <a href=\"https://matrix.to/#/@alice:hs.tld\">Alice]</a>!";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(3);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "Hi " });
-            expect(parts[1]).toStrictEqual({ type: "user-pill", text: "Alice]", resourceId: "@alice:hs.tld" });
-            expect(parts[2]).toStrictEqual({ type: "plain", text: "!" });
-        });
-        it('room pill', function() {
-            const html = "Try <a href=\"https://matrix.to/#/#room:hs.tld\">#room:hs.tld</a>?";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(3);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "Try " });
-            expect(parts[1]).toStrictEqual({ type: "room-pill", text: "#room:hs.tld", resourceId: "#room:hs.tld" });
-            expect(parts[2]).toStrictEqual({ type: "plain", text: "?" });
-        });
-        it('@room pill', function() {
-            const html = "<em>formatted</em> message for @room";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(2);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "_formatted_ message for " });
-            expect(parts[1]).toStrictEqual({ type: "at-room-pill", text: "@room" });
-        });
-        it('inline code', function() {
-            const html = "there is no place like <code>127.0.0.1</code>!";
-            const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
-            expect(parts.length).toBe(1);
-            expect(parts[0]).toStrictEqual({ type: "plain", text: "there is no place like `127.0.0.1`!" });
-        });
         it('code block with no trailing text', function() {
             const html = "<pre><code>0xDEADBEEF\n</code></pre>\n";
             const parts = normalize(parseEvent(htmlMessage(html), createPartCreator()));
