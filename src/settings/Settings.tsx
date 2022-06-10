@@ -452,6 +452,13 @@ export const SETTINGS: {[setting: string]: ISetting} = {
         ),
         default: false,
     },
+    "feature_star_messages": {
+        isFeature: true,
+        labsGroup: LabGroup.Messaging,
+        supportedLevels: LEVELS_FEATURE,
+        displayName: _td("Star Messages (still in works)"),
+        default: false,
+    },
     "baseFontSize": {
         displayName: _td("Font size"),
         supportedLevels: LEVELS_ACCOUNT_SETTINGS,

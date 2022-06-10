@@ -257,6 +257,8 @@ interface IMessageActionBarProps {
 export default class MessageActionBar extends React.PureComponent<IMessageActionBarProps> {
     public static contextType = RoomContext;
 
+    state = { isStarClicked: false };
+
     public componentDidMount(): void {
         if (this.props.mxEvent.status && this.props.mxEvent.status !== EventStatus.SENT) {
             this.props.mxEvent.on(MatrixEventEvent.Status, this.onSent);
@@ -307,6 +309,10 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
 
     private onEditClick = (): void => {
         editEvent(this.props.mxEvent, this.context.timelineRenderingType, this.props.getRelationsForEvent);
+    };
+
+    private onStarClick = (): void => {
+        this.setState({ isStarClicked: !this.state.isStarClicked });
     };
 
     private readonly forbiddenThreadHeadMsgType = [
@@ -431,6 +437,15 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                             title={_t("Reply")}
                             onClick={this.onReplyClick}
                             key="reply"
+                        />
+                    ));
+
+                    toolbarOpts.splice(-1, 0, (
+                        <RovingAccessibleTooltipButton
+                            className="mx_MessageActionBar_maskButton mx_MessageActionBar_starButton"
+                            title={_t("Star Message")}
+                            onClick={this.onStarClick}
+                            key="star"
                         />
                     ));
                 }
