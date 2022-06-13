@@ -464,4 +464,38 @@ describe('<MessageActionBar />', () => {
             });
         });
     });
+    describe('favourite button', () => {
+        describe('when favourite_messages feature is enabled', () => {
+            beforeEach(() => {
+                jest.spyOn(SettingsStore, 'getValue')
+                    .mockImplementation(setting => setting === 'feature_favourite_messages');
+            });
+
+            it('renders favourite button on own actionable event', () => {
+                const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
+                expect(queryByLabelText('Favourite')).toBeTruthy();
+            });
+
+            it('renders favourite button on other actionable events', () => {
+                const { queryByLabelText } = getComponent({ mxEvent: bobsMessageEvent });
+                expect(queryByLabelText('Favourite')).toBeTruthy();
+            });
+
+            it('does not render Favourite button on non-actionable event', () => {
+            // redacted event is not actionable
+                const { queryByLabelText } = getComponent({ mxEvent: redactedEvent });
+                expect(queryByLabelText('Favourite')).toBeFalsy();
+            });
+        });
+
+        describe('when favourite_messages feature is disabled', () => {
+            it('does not render', () => {
+                jest.spyOn(SettingsStore, 'getValue')
+                    .mockImplementation(setting => setting === 'feature_favourite_messages')
+                    .mockReturnValue(false);
+                const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
+                expect(queryByLabelText('Favurite')).toBeFalsy();
+            });
+        });
+    });
 });

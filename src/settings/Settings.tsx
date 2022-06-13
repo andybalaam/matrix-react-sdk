@@ -452,11 +452,11 @@ export const SETTINGS: {[setting: string]: ISetting} = {
         ),
         default: false,
     },
-    "feature_star_messages": {
+    "feature_favourite_messages": {
         isFeature: true,
         labsGroup: LabGroup.Messaging,
         supportedLevels: LEVELS_FEATURE,
-        displayName: _td("Star Messages (still in works)"),
+        displayName: _td("Favourite Messages (under active development)"),
         default: false,
     },
     "baseFontSize": {

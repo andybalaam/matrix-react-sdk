@@ -237,6 +237,19 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
     </RovingAccessibleTooltipButton>;
 };
 
+//test component
+const FavouriteButton = () => {
+    const onFavouriteClick = () => {
+        console.log("clicked");
+    };
+
+    return (<RovingAccessibleTooltipButton
+        className="mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton"
+        title={_t("Favourite")}
+        onClick={onFavouriteClick}
+        key="favourite" />);
+};
+
 interface IMessageActionBarProps {
     mxEvent: MatrixEvent;
     reactions?: Relations;
@@ -256,8 +269,6 @@ interface IMessageActionBarProps {
 
 export default class MessageActionBar extends React.PureComponent<IMessageActionBarProps> {
     public static contextType = RoomContext;
-
-    state = { isStarClicked: false };
 
     public componentDidMount(): void {
         if (this.props.mxEvent.status && this.props.mxEvent.status !== EventStatus.SENT) {
@@ -309,10 +320,6 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
 
     private onEditClick = (): void => {
         editEvent(this.props.mxEvent, this.context.timelineRenderingType, this.props.getRelationsForEvent);
-    };
-
-    private onStarClick = (): void => {
-        this.setState({ isStarClicked: !this.state.isStarClicked });
     };
 
     private readonly forbiddenThreadHeadMsgType = [
@@ -427,6 +434,12 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                 // Like the resend button, the react and reply buttons need to appear before the edit.
                 // The only catch is we do the reply button first so that we can make sure the react
                 // button is the very first button without having to do length checks for `splice()`.
+                if (SettingsStore.getValue("feature_favourite_messages")) {
+                    toolbarOpts.splice(-1, 0, (
+                        <FavouriteButton />
+                    ));
+                }
+
                 if (this.context.canSendMessages) {
                     if (this.showReplyInThreadAction) {
                         toolbarOpts.splice(0, 0, threadTooltipButton);
@@ -437,15 +450,6 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                             title={_t("Reply")}
                             onClick={this.onReplyClick}
                             key="reply"
-                        />
-                    ));
-
-                    toolbarOpts.splice(-1, 0, (
-                        <RovingAccessibleTooltipButton
-                            className="mx_MessageActionBar_maskButton mx_MessageActionBar_starButton"
-                            title={_t("Star Message")}
-                            onClick={this.onStarClick}
-                            key="star"
                         />
                     ));
                 }

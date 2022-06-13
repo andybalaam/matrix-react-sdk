@@ -104,7 +104,7 @@ limitations under the License.
         mask-image: url('$(res)/img/element-icons/room/message-bar/reply.svg');
     }
 
-    &.mx_MessageActionBar_starButton::after {
+    &.mx_MessageActionBar_favouriteButton::after {
         mask-image: url('$(res)/img/element-icons/room/message-bar/star.svg');
     }
 
