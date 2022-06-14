@@ -494,7 +494,7 @@ describe('<MessageActionBar />', () => {
                     .mockImplementation(setting => setting === 'feature_favourite_messages')
                     .mockReturnValue(false);
                 const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
-                expect(queryByLabelText('Favurite')).toBeFalsy();
+                expect(queryByLabelText('Favourite')).toBeFalsy();
             });
         });
     });
