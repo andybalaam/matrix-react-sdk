@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactElement, useContext, useEffect } from 'react';
+import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { EventStatus, MatrixEvent, MatrixEventEvent } from 'matrix-js-sdk/src/models/event';
 import classNames from 'classnames';
 import { MsgType, RelationType } from 'matrix-js-sdk/src/@types/event';
@@ -170,6 +170,7 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
     const context = useContext(CardContext);
 
     const relationType = mxEvent?.getRelation()?.rel_type;
+    console.log(relationType);
     const hasARelation = !!relationType && relationType !== RelationType.Thread;
     const firstTimeSeeingThreads = !localStorage.getItem("mx_seen_feature_thread");
     const threadsEnabled = SettingsStore.getValue("feature_thread");
@@ -239,15 +240,16 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
 
 //test component
 const FavouriteButton = () => {
+    const [isStarred, setIsStarred] = useState<Boolean>(false);
     const onFavouriteClick = () => {
-        console.log("clicked");
+        setIsStarred(!isStarred);
     };
 
-    return (<RovingAccessibleTooltipButton
-        className="mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton"
+    return <RovingAccessibleTooltipButton
+        className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton ${isStarred && 'fillStar'} `}
         title={_t("Favourite")}
         onClick={onFavouriteClick}
-        key="favourite" />);
+    />;
 };
 
 interface IMessageActionBarProps {
@@ -436,7 +438,7 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                 // button is the very first button without having to do length checks for `splice()`.
                 if (SettingsStore.getValue("feature_favourite_messages")) {
                     toolbarOpts.splice(-1, 0, (
-                        <FavouriteButton />
+                        <FavouriteButton key="favourite" />
                     ));
                 }
 
