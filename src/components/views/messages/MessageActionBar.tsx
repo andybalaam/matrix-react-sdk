@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactElement, useContext, useEffect, useState } from 'react';
+import React, { ReactElement, useContext, useEffect } from 'react';
 import { EventStatus, MatrixEvent, MatrixEventEvent } from 'matrix-js-sdk/src/models/event';
 import classNames from 'classnames';
 import { MsgType, RelationType } from 'matrix-js-sdk/src/@types/event';
@@ -48,6 +48,7 @@ import { ALTERNATE_KEY_NAME } from "../../../accessibility/KeyboardShortcuts";
 import { UserTab } from '../dialogs/UserTab';
 import { Action } from '../../../dispatcher/actions';
 import SdkConfig from "../../../SdkConfig";
+import FavMessageProvider, { FavMessageContext } from '../../../contexts/FavMessageContext';
 
 interface IOptionsButtonProps {
     mxEvent: MatrixEvent;
@@ -168,9 +169,7 @@ interface IReplyInThreadButton {
 
 const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
     const context = useContext(CardContext);
-
     const relationType = mxEvent?.getRelation()?.rel_type;
-    console.log(relationType);
     const hasARelation = !!relationType && relationType !== RelationType.Thread;
     const firstTimeSeeingThreads = !localStorage.getItem("mx_seen_feature_thread");
     const threadsEnabled = SettingsStore.getValue("feature_thread");
@@ -237,18 +236,34 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
         ) }
     </RovingAccessibleTooltipButton>;
 };
+const FavouriteButton = ({ mxEvent }) => {
+    const { favMsgIds, starStatus, setStarStatus, setfavMsgIds, starMessage } = useContext(FavMessageContext);
+    const eventId = mxEvent.getId();
 
-//test component
-const FavouriteButton = () => {
-    const [isStarred, setIsStarred] = useState<Boolean>(false);
-    const onFavouriteClick = () => {
-        setIsStarred(!isStarred);
+    useEffect(() => {
+        if (localStorage?.getItem("mx_favMsgIds") !== null) {
+            const data = JSON.parse(localStorage?.getItem("mx_favMsgIds"));
+            setfavMsgIds(data);
+        }
+    }, [setfavMsgIds]);
+
+    useEffect(() => {
+        //only fill the star icon of ids saved
+        if (favMsgIds.includes(eventId)) {
+            setStarStatus(true);
+        }
+    }, [favMsgIds, eventId, setStarStatus]);
+
+    const handleClick = () => {
+        starMessage(eventId);
+        localStorage.setItem('mx_favMsgIds', JSON.stringify(favMsgIds));
     };
 
     return <RovingAccessibleTooltipButton
-        className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton ${isStarred && 'fillStar'} `}
+        className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton 
+        ${starStatus && 'fillStar'} `}
         title={_t("Favourite")}
-        onClick={onFavouriteClick}
+        onClick={handleClick}
     />;
 };
 
@@ -438,7 +453,9 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                 // button is the very first button without having to do length checks for `splice()`.
                 if (SettingsStore.getValue("feature_favourite_messages")) {
                     toolbarOpts.splice(-1, 0, (
-                        <FavouriteButton key="favourite" />
+                        <FavMessageProvider key="favourite">
+                            <FavouriteButton mxEvent={this.props.mxEvent} />
+                        </FavMessageProvider>
                     ));
                 }
 
