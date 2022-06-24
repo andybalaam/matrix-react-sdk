@@ -14,42 +14,47 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { createContext, useState } from "react";
+import React, { createContext, useEffect, useReducer } from "react";
 
-export type TFavMessageState = {
+import { Action } from "../dispatcher/actions";
+
+let cacheState: string[] = [];
+
+const FavMessageReducer = (state = cacheState, action: {type: Action, eventId: string}) => {
+    switch (action.type) {
+        case Action.OnAddToFavourite:
+            cacheState.push(action.eventId);
+            return [...state, action.eventId];
+        case Action.OnRemoveFromFavourite:
+            cacheState.splice(cacheState.indexOf(action.eventId), 1);
+            return state.filter(val => val !== action.eventId);
+        default:
+            return state;
+    }
+};
+
+type TContext = {
     favMsgIds: string[];
-    starStatus: boolean;
-    setfavMsgIds: (favMsgIds: string[]) => void;
-    setStarStatus: (starStatus: boolean) => void;
-    starMessage: (eventId: string) => void;
+    dispatch: React.Dispatch<any>;
 };
-
-const initialState: TFavMessageState = {
+export const FavMessageContext = createContext<TContext | null>({
     favMsgIds: [],
-    starStatus: false,
-    setfavMsgIds: null,
-    setStarStatus: null,
-    starMessage: null,
-};
-
-export const FavMessageContext = createContext<TFavMessageState | null>(initialState);
+    dispatch: null,
+});
 
 const FavMessageProvider = ({ children }) => {
-    const [favMsgIds, setfavMsgIds] = useState<string[]>(initialState.favMsgIds);
-    const [starStatus, setStarStatus] = useState<boolean>(initialState.starStatus);
+    const [favMsgIds, dispatch] = useReducer(FavMessageReducer,
+        JSON.parse(localStorage.getItem('mx_favMsgIds')) ?? []);
 
-    const starMessage = (eventId: string) => {
-        if (favMsgIds.includes(eventId)) {
-            favMsgIds.splice(favMsgIds.indexOf(eventId), 1);
-            setStarStatus(false);
-        } else {
-            favMsgIds.push(eventId);
-            setStarStatus(true);
-        }
-    };
+    useEffect(() => {
+        //if on page refresh cacheState.length is 0, populate the array
+        //with fetched items from localStorage
+        if (cacheState.length === 0) cacheState = favMsgIds;
+        localStorage.setItem('mx_favMsgIds', JSON.stringify(cacheState));
+    }, [favMsgIds]);
 
     return (
-        <FavMessageContext.Provider value={{ favMsgIds, starStatus, setfavMsgIds, setStarStatus, starMessage }}>
+        <FavMessageContext.Provider value={{ favMsgIds, dispatch }}>
             { children }
         </FavMessageContext.Provider>
     );

@@ -78,40 +78,6 @@ limitations under the License.
             opacity: .75;
         }
 
-    &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        mask-size: 18px;
-        mask-repeat: no-repeat;
-        mask-position: center;
-        background-color: $secondary-content;
-    }
-
-    &:hover::after {
-        background-color: $primary-content;
-    }
-
-    &.mx_MessageActionBar_reactButton::after {
-        mask-image: url('$(res)/img/element-icons/room/message-bar/emoji.svg');
-    }
-
-    &.mx_MessageActionBar_replyButton::after {
-        mask-image: url('$(res)/img/element-icons/room/message-bar/reply.svg');
-    }
-
-    &.mx_MessageActionBar_favouriteButton::after {
-        mask-image: url('$(res)/img/element-icons/room/message-bar/star.svg');
-    }
-
-    &.fillStar::after {
-        background-color: #ffa534;
-    }
-
-    &.mx_MessageActionBar_threadButton {
         &::after {
             content: '';
             position: absolute;
@@ -146,6 +112,14 @@ limitations under the License.
                 background: $links;
                 animation-iteration-count: infinite;
             }
+        }
+
+        &.mx_MessageActionBar_favouriteButton::after {
+            mask-image: url('$(res)/img/element-icons/room/message-bar/star.svg');
+        }
+    
+        &.fillStar::after {
+            background-color: #ffa534;
         }
 
         &.mx_MessageActionBar_editButton::after {
@@ -193,5 +167,4 @@ limitations under the License.
             mask-image: url('$(res)/img/element-icons/link.svg');
         }
     }
-}
 }

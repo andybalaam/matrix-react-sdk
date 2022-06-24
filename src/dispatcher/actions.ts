@@ -315,4 +315,16 @@ export enum Action {
      * Fired when the client was logged in. No additional payload information required.
      */
     OnLoggedIn = "on_logged_in",
+
+    /**
+     * Fired when the star button is clicked on timeline contextmenu
+     */
+    OnAddToFavourite = "on_add_to_favourite",
+
+    /**
+     * Fired when the star button is unclicked on timeline ContextMenu
+     */
+     OnRemoveFromFavourite = "on_remove_from_favourite",
+
+
 }

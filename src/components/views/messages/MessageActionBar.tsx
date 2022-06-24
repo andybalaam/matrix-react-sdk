@@ -236,32 +236,28 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
         ) }
     </RovingAccessibleTooltipButton>;
 };
+
 const FavouriteButton = ({ mxEvent }) => {
-    const { favMsgIds, starStatus, setStarStatus, setfavMsgIds, starMessage } = useContext(FavMessageContext);
+    const { favMsgIds, dispatch } = useContext(FavMessageContext);
     const eventId = mxEvent.getId();
 
-    useEffect(() => {
-        if (localStorage?.getItem("mx_favMsgIds") !== null) {
-            const data = JSON.parse(localStorage?.getItem("mx_favMsgIds"));
-            setfavMsgIds(data);
-        }
-    }, [setfavMsgIds]);
-
-    useEffect(() => {
-        //only fill the star icon of ids saved
-        if (favMsgIds.includes(eventId)) {
-            setStarStatus(true);
-        }
-    }, [favMsgIds, eventId, setStarStatus]);
-
     const handleClick = () => {
-        starMessage(eventId);
-        localStorage.setItem('mx_favMsgIds', JSON.stringify(favMsgIds));
+        if (favMsgIds.includes(eventId)) {
+            dispatch({
+                type: Action.OnRemoveFromFavourite,
+                eventId,
+            });
+        } else {
+            dispatch({
+                type: Action.OnAddToFavourite,
+                eventId,
+            });
+        }
     };
 
     return <RovingAccessibleTooltipButton
         className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton 
-        ${starStatus && 'fillStar'} `}
+        ${favMsgIds.includes(eventId) && 'fillStar'} `}
         title={_t("Favourite")}
         onClick={handleClick}
     />;
