@@ -20,17 +20,18 @@ import { Action } from "../dispatcher/actions";
 
 let cacheState: string[] = [];
 
-const FavMessageReducer = (state = cacheState, action: {type: Action, eventId: string}) => {
+const FavMessageReducer = (_, action: {type: Action, eventId: string}) => {
     switch (action.type) {
         case Action.OnAddToFavourite:
             cacheState.push(action.eventId);
-            return [...state, action.eventId];
+            break;
         case Action.OnRemoveFromFavourite:
             cacheState.splice(cacheState.indexOf(action.eventId), 1);
-            return state.filter(val => val !== action.eventId);
+            break;
         default:
-            return state;
+            throw new Error("Ensure a valid Action is dispatched");
     }
+    return [...cacheState];
 };
 
 type TContext = {
