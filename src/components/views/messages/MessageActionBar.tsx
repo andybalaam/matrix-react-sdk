@@ -48,7 +48,7 @@ import { ALTERNATE_KEY_NAME } from "../../../accessibility/KeyboardShortcuts";
 import { UserTab } from '../dialogs/UserTab';
 import { Action } from '../../../dispatcher/actions';
 import SdkConfig from "../../../SdkConfig";
-import FavMessageProvider, { FavMessageContext } from '../../../contexts/FavMessageContext';
+import FavouriteMessageProvider, { FavouriteMessageContext } from '../../../contexts/FavouriteMessageContext';
 
 interface IOptionsButtonProps {
     mxEvent: MatrixEvent;
@@ -238,11 +238,11 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
 };
 
 const FavouriteButton = ({ mxEvent }) => {
-    const { favMsgIds, dispatch } = useContext(FavMessageContext);
+    const { favouriteMessageIds, dispatch } = useContext(FavouriteMessageContext);
     const eventId = mxEvent.getId();
 
     const handleClick = () => {
-        if (favMsgIds.includes(eventId)) {
+        if (favouriteMessageIds.includes(eventId)) {
             dispatch({
                 type: Action.OnRemoveFromFavourite,
                 eventId,
@@ -257,7 +257,7 @@ const FavouriteButton = ({ mxEvent }) => {
 
     return <RovingAccessibleTooltipButton
         className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton 
-        ${favMsgIds.includes(eventId) && 'fillStar'} `}
+        ${favouriteMessageIds.includes(eventId) && 'mx_MessageActionBar_favouriteButton_fillstar'} `}
         title={_t("Favourite")}
         onClick={handleClick}
     />;
@@ -471,9 +471,9 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                 }
                 if (SettingsStore.getValue("feature_favourite_messages")) {
                     toolbarOpts.splice(-1, 0, (
-                        <FavMessageProvider key="favourite">
+                        <FavouriteMessageProvider key="favourite">
                             <FavouriteButton mxEvent={this.props.mxEvent} />
-                        </FavMessageProvider>
+                        </FavouriteMessageProvider>
                     ));
                 }
 

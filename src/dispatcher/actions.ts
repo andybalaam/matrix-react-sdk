@@ -324,7 +324,5 @@ export enum Action {
     /**
      * Fired when the star button is unclicked on timeline ContextMenu
      */
-     OnRemoveFromFavourite = "on_remove_from_favourite",
-
-
+    OnRemoveFromFavourite = "on_remove_from_favourite",
 }
