@@ -325,4 +325,10 @@ export enum Action {
      * Fired when the star button is unclicked on timeline ContextMenu
      */
     OnRemoveFromFavourite = "on_remove_from_favourite",
+
+     /**
+     * Fired when the PlatformPeg gets a new platform set upon it, should only happen once per app load lifecycle.
+     * Fires with the PlatformSetPayload.
+     */
+    PlatformSet = "platform_set",
 }
