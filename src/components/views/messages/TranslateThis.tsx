@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Dispatch, ReactElement, SetStateAction, useState } from 'react';
 import { franc } from 'franc-min';
+import { iso6393To1 } from 'iso-639-3';
+import React, { Dispatch, ReactElement, SetStateAction, useState } from 'react';
 
 import { _t } from "../../../languageHandler";
 import AccessibleButton, { ButtonEvent } from '../elements/AccessibleButton';
-import {iso6393To1} from 'iso-639-3';
 
 enum Status {
     Ready,
@@ -106,6 +106,37 @@ function message(status: Status): string {
 
 // Translation technology-specific code
 
+let bergamotState = null;
+const bergamotListeners = {
+    import_reply: [],
+    load_model_reply: [],
+    translate_reply: [],
+};
+
+const bergamotWorker = new Worker('/bergamot/js/worker.js');
+bergamotWorker.postMessage(["import"]);
+bergamotWorker.onmessage = (e) => {
+    const messageType = e.data[0];
+    const messageData = e.data[1];
+
+    for (const listener of bergamotListeners[messageType]) {
+        listener(messageData);
+    }
+    bergamotListeners[messageType] = [];
+};
+
+function onImportReply(messageData: Array<string>) {
+    console.log(`import_reply ${messageData}`);
+    if (bergamotState === null) {
+        bergamotState = {};
+    } else {
+        console.error("Unexpected import_reply");
+    }
+}
+bergamotListeners.import_reply.push(onImportReply);
+
+//bergamotWorker.postMessage(["load_model", "de", "en"]);
+
 /**
  * Return the ISO-6391 language code for this text e.g. "fr" or "und"
  */
@@ -115,6 +146,73 @@ function francDetectLanguage(messageText: string): string {
     return lang2 ?? "und";
 }
 
-async function bergamotTranslate(_messageText: string): Promise<string | null> {
-    return "translated";
+async function assureModel(lngFrom: string, lngTo: string): Promise<boolean> {
+    const modelName = `${lngFrom}:${lngTo}`;
+    if (bergamotState[modelName]) {
+        return Promise.resolve(bergamotState[modelName].exists);
+    } else {
+        return new Promise(
+            (resolve, _reject) => {
+                console.log(`Requesting to load model ${modelName}.`);
+                bergamotWorker.postMessage([
+                    "load_model",
+                    lngFrom,
+                    lngTo,
+                ]);
+                bergamotListeners.load_model_reply.push((response: string) => {
+                    bergamotState[modelName] = { exists: response === "Model successfully loaded" };
+                    resolve(bergamotState[modelName].exists);
+                });
+            },
+        );
+    }
 }
+
+async function bergamotTranslate(messageText: string): Promise<string | null> {
+    const lngFrom = francDetectLanguage(messageText);
+    const modelExists = await assureModel(lngFrom, "en");
+    if (modelExists) {
+        const result = await translate(lngFrom, "en", messageText);
+        if (result === "") {
+            return null;
+        } else {
+            return result;
+        }
+    } else {
+        return null;
+    }
+}
+
+function translate(lngFrom: string, lngTo: string, messageText: string): Promise<string> {
+    return new Promise(
+        (resolve, _reject) => {
+            bergamotWorker.postMessage([
+                "translate",
+                lngFrom,
+                lngTo,
+                [messageText],
+                [{ "isQualityScores": false, "isHtml": false }],
+            ]);
+            bergamotListeners.translate_reply.push((messageData: Array<string>) => resolve(messageData[0]));
+        },
+    );
+}
+
+//async function ensureBergamotLoaded() {
+//    if (!window["BERGAMOT"]) {
+//        await loadScript('/bergamot/bergamot.js');
+//    }
+//    return window["BERGAMOT"];
+//}
+//
+//// https://aaronsmith.online/easily-load-an-external-script-using-javascript/
+//const loadScript = (src: string) => {
+//    return new Promise((resolve, reject) => {
+//        const script = document.createElement('script');
+//        script.type = 'text/javascript';
+//        script.onload = resolve;
+//        script.onerror = reject;
+//        script.src = src;
+//        document.head.append(script);
+//    });
+//};
