@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactElement, useContext, useEffect } from 'react';
+import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { EventStatus, MatrixEvent, MatrixEventEvent } from 'matrix-js-sdk/src/models/event';
 import classNames from 'classnames';
 import { MsgType, RelationType } from 'matrix-js-sdk/src/@types/event';
@@ -241,25 +241,26 @@ interface IFavouriteButtonProp {
     mxEvent: MatrixEvent;
 }
 const FavouriteButton = ({ mxEvent }: IFavouriteButtonProp) => {
-    const { favouriteMessageIds, dispatch } = useContext(FavouriteMessageContext);
+    const storageKey = 'io_element_favouriteMessages';
     const eventId = mxEvent.getId();
 
+    const [favouriteMessageIds, setFavouriteMessageIds] = useState(
+        JSON.parse(localStorage.getItem(storageKey) ?? "[]"),
+    );
+
     const handleClick = () => {
+        let newIds: Array<string>;
         if (favouriteMessageIds.includes(eventId)) {
-            dispatch({
-                type: Action.OnRemoveFromFavourite,
-                eventId,
-            });
+            newIds = favouriteMessageIds.filter((id: string) => id != eventId);
         } else {
-            dispatch({
-                type: Action.OnAddToFavourite,
-                eventId,
-            });
+            newIds = [...favouriteMessageIds, eventId];
         }
+        localStorage.setItem(storageKey, JSON.stringify(newIds));
+        setFavouriteMessageIds(newIds);
     };
 
     return <RovingAccessibleTooltipButton
-        className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton 
+        className={`mx_MessageActionBar_maskButton mx_MessageActionBar_favouriteButton
         ${favouriteMessageIds.includes(eventId) && 'mx_MessageActionBar_favouriteButton_fillstar'} `}
         title={_t("Favourite")}
         onClick={handleClick}
@@ -473,11 +474,7 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
                     />);
                 }
                 if (SettingsStore.getValue("feature_favourite_messages")) {
-                    toolbarOpts.splice(-1, 0, (
-                        <FavouriteMessageProvider key="favourite">
-                            <FavouriteButton mxEvent={this.props.mxEvent} />
-                        </FavouriteMessageProvider>
-                    ));
+                    toolbarOpts.splice(-1, 0, <FavouriteButton key="favourite" mxEvent={this.props.mxEvent} />);
                 }
 
                 // XXX: Assuming that the underlying tile will be a media event if it is eligible media.

@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { act } from 'react-test-renderer';
 import {
     EventType,
@@ -52,6 +52,7 @@ describe('<MessageActionBar />', () => {
     const userId = '@alice:server.org';
     const roomId = '!room:server.org';
     const alicesMessageEvent = new MatrixEvent({
+        event_id: "$alices_message",
         type: EventType.RoomMessage,
         sender: userId,
         room_id: roomId,
@@ -62,6 +63,7 @@ describe('<MessageActionBar />', () => {
     });
 
     const bobsMessageEvent = new MatrixEvent({
+        event_id: "$bobs_message",
         type: EventType.RoomMessage,
         sender: '@bob:server.org',
         room_id: roomId,
@@ -86,7 +88,7 @@ describe('<MessageActionBar />', () => {
     const localStorageMock = (() => {
         let store = {};
         return {
-            getItem: jest.fn().mockImplementation(key => store[key]),
+            getItem: jest.fn().mockImplementation(key => store[key] ?? null),
             setItem: jest.fn().mockImplementation((key, value) => {
                 store[key] = value;
             }),
@@ -126,6 +128,7 @@ describe('<MessageActionBar />', () => {
             </RoomContext.Provider>);
 
     beforeEach(() => {
+        cleanup();
         jest.clearAllMocks();
         alicesMessageEvent.setStatus(EventStatus.SENT);
         jest.spyOn(SettingsStore, 'getValue').mockReturnValue(false);
@@ -485,9 +488,17 @@ describe('<MessageActionBar />', () => {
     });
     describe('favourite button', () => {
         describe('when favourite_messages feature is enabled', () => {
+            const favButton = (evt: MatrixEvent) => {
+                cleanup();
+                return getComponent({ mxEvent: evt }).getByRole('button', { name: "Favourite" });
+            };
+
             beforeEach(() => {
+                // If asked what settings are on, reply true for favourite messages
                 jest.spyOn(SettingsStore, 'getValue')
                     .mockImplementation(setting => setting === 'feature_favourite_messages');
+
+                localStorageMock.clear();
             });
 
             it('renders favourite button on own actionable event', () => {
@@ -506,26 +517,95 @@ describe('<MessageActionBar />', () => {
                 expect(queryByLabelText('Favourite')).toBeFalsy();
             });
 
-            it('changes style on click, handles get and set methods of localStorage', () => {
-                const { queryByLabelText, container } = getComponent({ mxEvent: alicesMessageEvent });
+            it('changes style on click', () => {
+                // Given we have a favourite button
+                const fav = favButton(alicesMessageEvent);
 
-                //default state
-                expect(container.getElementsByClassName('mx_MessageActionBar_favouriteButton_fillstar').length).toBe(0);
-                expect(localStorageMock.getItem).toHaveBeenCalled();
+                // Initially, it does not have the fillstar class (it is grey)
+                expect(fav.classList).not.toContain('mx_MessageActionBar_favouriteButton_fillstar');
 
-                //when clicked the star icon is styled and expects the setItem method of localstorage be called
-                act(() => {
-                    fireEvent.click(queryByLabelText('Favourite'));
-                });
-                expect(container.getElementsByClassName('mx_MessageActionBar_favouriteButton_fillstar')).toBeTruthy();
-                expect(localStorageMock.setItem).toHaveBeenCalled();
+                // When we click the favourite button
+                fav.click();
+
+                // Then it goes yellow
+                expect(fav.classList).toContain('mx_MessageActionBar_favouriteButton_fillstar');
+            });
+
+            it('saves its state to localStorage', () => {
+                // When we create a favourite button and click it
+                const favAlice = favButton(alicesMessageEvent);
+                favAlice.click();
+
+                // It saves to localStorage
+                expect(localStorageMock.getItem('io_element_favouriteMessages'))
+                    .toEqual('["$alices_message"]');
+
+                // And when we click another
+                const favBob = favButton(bobsMessageEvent);
+                favBob.click();
+
+                // It is saved too
+                expect(localStorageMock.getItem('io_element_favouriteMessages'))
+                    .toEqual('["$alices_message","$bobs_message"]');
+            });
+
+            it('remembers whether an event was favourited', () => {
+                // Whereas a new component for a different event ID is not
+                expect(favButton(bobsMessageEvent).classList)
+                    .not.toContain('mx_MessageActionBar_favouriteButton_fillstar');
+
+                // Start with a message that is not favourited
+                const favAlice = favButton(alicesMessageEvent);
+                expect(favAlice.classList).not.toContain('mx_MessageActionBar_favouriteButton_fillstar');
+
+                // And favourite it
+                fireEvent.click(favAlice);
+
+                // Then when I create a new component for it, it is already
+                // favourited (because we saved the state somewhere).
+                const favAliceCopy = favButton(alicesMessageEvent);
+                expect(favAliceCopy.classList).toContain('mx_MessageActionBar_favouriteButton_fillstar');
+
+                // Whereas a new component for a different event ID is not
+                const favBob = favButton(bobsMessageEvent);
+                expect(favBob.classList).not.toContain('mx_MessageActionBar_favouriteButton_fillstar');
+            });
+
+            it('remembers favourited state of multiple events', () => {
+                // Start with two favourited messages
+                favButton(alicesMessageEvent).click();
+                favButton(bobsMessageEvent).click();
+
+                // Then when I create new components
+                const favAliceCopy = favButton(alicesMessageEvent);
+                const favBobCopy = favButton(bobsMessageEvent);
+
+                // They are still favourited
+                expect(favAliceCopy.classList).toContain('mx_MessageActionBar_favouriteButton_fillstar');
+                expect(favBobCopy.classList).toContain('mx_MessageActionBar_favouriteButton_fillstar');
+
+                // And when I unfavourite Bob's message
+                favBobCopy.click();
+
+                // Alice's is still favourited
+                expect(favButton(alicesMessageEvent).classList)
+                    .toContain('mx_MessageActionBar_favouriteButton_fillstar');
+
+                // But Bob's is not
+                expect(favButton(bobsMessageEvent).classList)
+                    .not.toContain('mx_MessageActionBar_favouriteButton_fillstar');
             });
         });
 
         describe('when favourite_messages feature is disabled', () => {
             it('does not render', () => {
+                // If asked what settings are on, reply false always
                 jest.spyOn(SettingsStore, 'getValue').mockReturnValue(false);
+
+                // When we create a MessageActionBar
                 const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
+
+                // It has no favourite button
                 expect(queryByLabelText('Favourite')).toBeFalsy();
             });
         });
