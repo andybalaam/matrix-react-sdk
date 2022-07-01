@@ -490,20 +490,6 @@ describe('<MessageActionBar />', () => {
                     .mockImplementation(setting => setting === 'feature_favourite_messages');
             });
 
-            // it('favourite button is selected when clicked before', () => {
-            //     const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
-            //     act(() => {
-            //         fireEvent.click(queryByLabelText('Favourite'));
-            //     });
-            //     // expect(localStorageMock.setItem)
-            //     //     .toHaveBeenCalled();
-            //     // expect(localStorageMock.getItem('io_element_favouriteMessages')).toContain(alicesMessageEvent.getId());
-
-            //     // console.log(alicesMessageEvent.event.event_id);
-            //     expect(localStorageMock.setItem)
-            //         .toHaveBeenCalledWith('io_element_favouriteMessages', alicesMessageEvent.event.event_id);
-            // });
-
             it('renders favourite button on own actionable event', () => {
                 const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
                 expect(queryByLabelText('Favourite')).toBeTruthy();
