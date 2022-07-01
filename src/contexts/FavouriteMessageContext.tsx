@@ -45,7 +45,7 @@ export const FavouriteMessageContext = createContext<TContext | null>({
 
 const FavouriteMessageProvider = ({ children }) => {
     const [favouriteMessageIds, dispatch] = useReducer(ActionHandler,
-        JSON.parse(localStorage.getItem('io_element_favouriteMessages')) ?? []);
+        JSON.parse(localStorage.getItem('io_element_favouriteMessages') ?? "[]"));
 
     useEffect(() => {
         //if on page refresh cachedFavouriteMessageIds.length is 0, populate the array

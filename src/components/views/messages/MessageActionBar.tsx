@@ -237,7 +237,10 @@ const ReplyInThreadButton = ({ mxEvent }: IReplyInThreadButton) => {
     </RovingAccessibleTooltipButton>;
 };
 
-const FavouriteButton = ({ mxEvent }) => {
+interface IFavouriteButtonProp {
+    mxEvent: MatrixEvent;
+}
+const FavouriteButton = ({ mxEvent }: IFavouriteButtonProp) => {
     const { favouriteMessageIds, dispatch } = useContext(FavouriteMessageContext);
     const eventId = mxEvent.getId();
 

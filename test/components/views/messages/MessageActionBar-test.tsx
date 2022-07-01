@@ -82,6 +82,25 @@ describe('<MessageActionBar />', () => {
         ...mockClientMethodsEvents(),
         getRoom: jest.fn(),
     });
+
+    const localStorageMock = (() => {
+        let store = {};
+        return {
+            getItem: jest.fn().mockImplementation(key => store[key]),
+            setItem: jest.fn().mockImplementation((key, value) => {
+                store[key] = value;
+            }),
+            clear: jest.fn().mockImplementation(() => {
+                store = {};
+            }),
+            removeItem: jest.fn().mockImplementation((key) => delete store[key]),
+        };
+    })();
+    Object.defineProperty(window, 'localStorage', {
+        value: localStorageMock,
+        writable: true,
+    });
+
     const room = new Room(roomId, client, userId);
     jest.spyOn(room, 'getPendingEvents').mockReturnValue([]);
 
@@ -471,6 +490,20 @@ describe('<MessageActionBar />', () => {
                     .mockImplementation(setting => setting === 'feature_favourite_messages');
             });
 
+            // it('favourite button is selected when clicked before', () => {
+            //     const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
+            //     act(() => {
+            //         fireEvent.click(queryByLabelText('Favourite'));
+            //     });
+            //     // expect(localStorageMock.setItem)
+            //     //     .toHaveBeenCalled();
+            //     // expect(localStorageMock.getItem('io_element_favouriteMessages')).toContain(alicesMessageEvent.getId());
+
+            //     // console.log(alicesMessageEvent.event.event_id);
+            //     expect(localStorageMock.setItem)
+            //         .toHaveBeenCalledWith('io_element_favouriteMessages', alicesMessageEvent.event.event_id);
+            // });
+
             it('renders favourite button on own actionable event', () => {
                 const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
                 expect(queryByLabelText('Favourite')).toBeTruthy();
@@ -486,13 +519,26 @@ describe('<MessageActionBar />', () => {
                 const { queryByLabelText } = getComponent({ mxEvent: redactedEvent });
                 expect(queryByLabelText('Favourite')).toBeFalsy();
             });
+
+            it('changes style on click, handles get and set methods of localStorage', () => {
+                const { queryByLabelText, container } = getComponent({ mxEvent: alicesMessageEvent });
+
+                //default state
+                expect(container.getElementsByClassName('mx_MessageActionBar_favouriteButton_fillstar').length).toBe(0);
+                expect(localStorageMock.getItem).toHaveBeenCalled();
+
+                //when clicked the star icon is styled and expects the setItem method of localstorage be called
+                act(() => {
+                    fireEvent.click(queryByLabelText('Favourite'));
+                });
+                expect(container.getElementsByClassName('mx_MessageActionBar_favouriteButton_fillstar')).toBeTruthy();
+                expect(localStorageMock.setItem).toHaveBeenCalled();
+            });
         });
 
         describe('when favourite_messages feature is disabled', () => {
             it('does not render', () => {
-                jest.spyOn(SettingsStore, 'getValue')
-                    .mockImplementation(setting => setting === 'feature_favourite_messages')
-                    .mockReturnValue(false);
+                jest.spyOn(SettingsStore, 'getValue').mockReturnValue(false);
                 const { queryByLabelText } = getComponent({ mxEvent: alicesMessageEvent });
                 expect(queryByLabelText('Favourite')).toBeFalsy();
             });
