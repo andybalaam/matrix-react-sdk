@@ -346,4 +346,14 @@ export enum Action {
      * Fired when we want to view a thread, either a new one or an existing one
      */
     ShowThread = "show_thread",
+
+    /**
+     * Fired when we want to view favourited messages panel
+     */
+    ViewFavouriteMessages = "view_favourite_messages",
+
+    /**
+     * Fired when we want to clear all favourited messages
+     */
+    OpenClearModal = "open_clear_modal",
 }

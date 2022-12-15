@@ -14,27 +14,99 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState } from "react";
+import { IContent, MatrixEvent } from "matrix-js-sdk/src/models/event";
+import { useRef, useState } from "react";
 
-const favouriteMessageIds = JSON.parse(localStorage?.getItem("io_element_favouriteMessages") ?? "[]") as string[];
+interface IButtonProp {
+    mxEvent?: MatrixEvent;
+}
 
-export default function useFavouriteMessages() {
+interface FavouriteStorage {
+    eventId: string;
+    roomId: string;
+    content: IContent;
+}
+
+// Global variable tracking LocalStorage state
+let ioElementFavouriteMessages: FavouriteStorage[] = null;
+
+function loadFavourites(): FavouriteStorage[] {
+    try {
+        return JSON.parse(localStorage?.getItem("io_element_favouriteMessages") ?? "[]");
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+}
+
+function saveFavourites(): void {
+    localStorage?.setItem("io_element_favouriteMessages", JSON.stringify(ioElementFavouriteMessages));
+}
+
+function clearFavourites(): void {
+    ioElementFavouriteMessages.length = 0;
+    localStorage.removeItem("io_element_favouriteMessages");
+}
+
+export default function useFavouriteMessages(props?: IButtonProp) {
+    if (ioElementFavouriteMessages === null) {
+        ioElementFavouriteMessages = loadFavourites();
+    }
+
+    const sortState = useRef(false);
+    const isSearchClicked = useRef(false);
+
     const [, setX] = useState<string[]>();
+    const eventId = props?.mxEvent.getId();
+    const roomId = props?.mxEvent.getRoomId();
+    const content = props?.mxEvent.getContent();
 
-    //checks if an id already exist
-    const isFavourite = (eventId: string): boolean => favouriteMessageIds.includes(eventId);
+    const isFavourite = (): boolean => {
+        return ioElementFavouriteMessages.some((f) => f.eventId === eventId);
+    };
 
-    const toggleFavourite = (eventId: string) => {
-        isFavourite(eventId)
-            ? favouriteMessageIds.splice(favouriteMessageIds.indexOf(eventId), 1)
-            : favouriteMessageIds.push(eventId);
+    const toggleFavourite = () => {
+        const idx = ioElementFavouriteMessages.findIndex((f) => f.eventId === eventId);
 
-        //update the local storage
-        localStorage.setItem("io_element_favouriteMessages", JSON.stringify(favouriteMessageIds));
+        if (idx !== -1) {
+            ioElementFavouriteMessages.splice(idx, 1);
+        } else {
+            ioElementFavouriteMessages.push({ eventId, roomId, content });
+        }
 
-        // This forces a re-render to account for changes in appearance in real-time when the favourite button is toggled
+        saveFavourites();
+
+        // Force a re-render
         setX([]);
     };
 
-    return { isFavourite, toggleFavourite };
+    const reorderFavouriteMessages = () => {
+        sortState.current = !sortState.current;
+    };
+
+    const setSearchState = (val: boolean) => {
+        isSearchClicked.current = val;
+    };
+
+    const clearFavouriteMessages = () => {
+        clearFavourites();
+    };
+
+    const getFavouriteMessagesIds = () => {
+        const ret = JSON.parse(JSON.stringify(ioElementFavouriteMessages));
+        if (sortState.current) {
+            ret.reverse();
+        }
+        return ret;
+    };
+
+    return {
+        isFavourite,
+        toggleFavourite,
+        getFavouriteMessagesIds,
+        reorderFavouriteMessages,
+        clearFavouriteMessages,
+        setSearchState,
+        isSearchClicked: isSearchClicked.current,
+    };
 }

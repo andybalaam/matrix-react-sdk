@@ -839,6 +839,9 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
                     hideToSRUsers: false,
                 });
                 break;
+            case Action.ViewFavouriteMessages:
+                this.viewFavouriteMessages();
+                break;
             case Action.PseudonymousAnalyticsAccept:
                 hideAnalyticsToast();
                 SettingsStore.setValue("pseudonymousAnalyticsOptIn", null, SettingLevel.ACCOUNT, true);
@@ -1035,6 +1038,11 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
         this.notifyNewScreen("home");
         ThemeController.isLogin = false;
         this.themeWatcher.recheck();
+    }
+
+    private viewFavouriteMessages() {
+        this.setPage(PageType.FavouriteMessagesView);
+        this.notifyNewScreen("favourite_messages");
     }
 
     private viewUser(userId: string, subAction: string) {
@@ -1754,6 +1762,10 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
         } else if (screen === "home") {
             dis.dispatch({
                 action: Action.ViewHomePage,
+            });
+        } else if (screen === "favourite_messages") {
+            dis.dispatch({
+                action: Action.ViewFavouriteMessages,
             });
         } else if (screen === "start") {
             this.showScreen("home");

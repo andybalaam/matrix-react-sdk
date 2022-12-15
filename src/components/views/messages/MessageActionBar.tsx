@@ -276,11 +276,10 @@ interface IFavouriteButtonProp {
 }
 
 const FavouriteButton = ({ mxEvent }: IFavouriteButtonProp) => {
-    const { isFavourite, toggleFavourite } = useFavouriteMessages();
-
+    const { isFavourite, toggleFavourite } = useFavouriteMessages({ mxEvent });
     const eventId = mxEvent.getId();
-    const classes = classNames("mx_MessageActionBar_iconButton mx_MessageActionBar_favouriteButton", {
-        mx_MessageActionBar_favouriteButton_fillstar: isFavourite(eventId),
+    const classes = classNames("mx_MessageActionBar_iconButton", {
+        mx_MessageActionBar_favouriteButton_fillstar: isFavourite(),
     });
 
     const onClick = useCallback(
@@ -289,9 +288,9 @@ const FavouriteButton = ({ mxEvent }: IFavouriteButtonProp) => {
             e.preventDefault();
             e.stopPropagation();
 
-            toggleFavourite(eventId);
+            toggleFavourite();
         },
-        [toggleFavourite, eventId],
+        [toggleFavourite],
     );
 
     return (
@@ -440,7 +439,9 @@ export default class MessageActionBar extends React.PureComponent<IMessageAction
 
     public render(): JSX.Element {
         const toolbarOpts = [];
-        if (canEditContent(this.props.mxEvent)) {
+        const isFavouritePageCheck = window.location.href.split("/").pop() === "favourite_messages";
+
+        if (canEditContent(this.props.mxEvent) && !isFavouritePageCheck) {
             toolbarOpts.push(
                 <RovingAccessibleTooltipButton
                     className="mx_MessageActionBar_iconButton"

@@ -516,7 +516,7 @@ describe("<MessageActionBar />", () => {
                 expect(queryByLabelText("Favourite")).toBeFalsy();
             });
 
-            it("remembers favourited state of multiple events, and handles the localStorage of the events accordingly", () => {
+            it("remembers favourited state of events, and stores them in localStorage", () => {
                 const alicesAction = favButton(alicesMessageEvent);
                 const bobsAction = favButton(bobsMessageEvent);
 
@@ -534,7 +534,11 @@ describe("<MessageActionBar />", () => {
                 expect(bobsAction.classList).not.toContain("mx_MessageActionBar_favouriteButton_fillstar");
                 expect(localStorageMock.setItem).toHaveBeenCalledWith(
                     "io_element_favouriteMessages",
-                    '["$alices_message"]',
+                    "[{" +
+                        '"eventId":"$alices_message",' +
+                        '"roomId":"!room:server.org",' +
+                        '"content":{"msgtype":"m.text","body":"Hello"}' +
+                        "}]",
                 );
 
                 //when bob's event is fired,both should be styled and stored in localStorage
@@ -542,17 +546,24 @@ describe("<MessageActionBar />", () => {
                     fireEvent.click(bobsAction);
                 });
 
+                const aliceAndBob = JSON.stringify([
+                    {
+                        eventId: "$alices_message",
+                        roomId: "!room:server.org",
+                        content: { msgtype: "m.text", body: "Hello" },
+                    },
+                    {
+                        eventId: "$bobs_message",
+                        roomId: "!room:server.org",
+                        content: { msgtype: "m.text", body: "I am bob" },
+                    },
+                ]);
                 expect(alicesAction.classList).toContain("mx_MessageActionBar_favouriteButton_fillstar");
                 expect(bobsAction.classList).toContain("mx_MessageActionBar_favouriteButton_fillstar");
-                expect(localStorageMock.setItem).toHaveBeenCalledWith(
-                    "io_element_favouriteMessages",
-                    '["$alices_message","$bobs_message"]',
-                );
+                expect(localStorageMock.setItem).toHaveBeenCalledWith("io_element_favouriteMessages", aliceAndBob);
 
                 //finally, at this point the localStorage should contain the two eventids
-                expect(localStorageMock.getItem("io_element_favouriteMessages")).toEqual(
-                    '["$alices_message","$bobs_message"]',
-                );
+                expect(localStorageMock.getItem("io_element_favouriteMessages")).toEqual(aliceAndBob);
 
                 //if decided to unfavourite bob's event by clicking again
                 act(() => {
@@ -560,7 +571,15 @@ describe("<MessageActionBar />", () => {
                 });
                 expect(bobsAction.classList).not.toContain("mx_MessageActionBar_favouriteButton_fillstar");
                 expect(alicesAction.classList).toContain("mx_MessageActionBar_favouriteButton_fillstar");
-                expect(localStorageMock.getItem("io_element_favouriteMessages")).toEqual('["$alices_message"]');
+                expect(localStorageMock.getItem("io_element_favouriteMessages")).toEqual(
+                    JSON.stringify([
+                        {
+                            eventId: "$alices_message",
+                            roomId: "!room:server.org",
+                            content: { msgtype: "m.text", body: "Hello" },
+                        },
+                    ]),
+                );
             });
         });
 
