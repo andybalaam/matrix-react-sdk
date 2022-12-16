@@ -33,19 +33,18 @@ interface IProps {
 
 const FavouriteMessagesPanel = (props: IProps) => {
     const favouriteMessagesPanelRef = useRef<ScrollPanel>();
-    let favouriteMessagesPanel;
 
     if (props.favouriteMessageEvents?.length === 0) {
-        favouriteMessagesPanel = (
+        return (
             <>
-                <FavouriteMessagesHeader handleSearchQuery={props.handleSearchQuery} />
+                <FavouriteMessagesHeader query={props.searchQuery} handleSearchQuery={props.handleSearchQuery} />
                 <h2 className="mx_FavouriteMessages_emptyMarker">{_t("No Favourite Messages")}</h2>
             </>
         );
     } else {
-        favouriteMessagesPanel = (
+        return (
             <>
-                <FavouriteMessagesHeader handleSearchQuery={props.handleSearchQuery} />
+                <FavouriteMessagesHeader query={props.searchQuery} handleSearchQuery={props.handleSearchQuery} />
                 <ScrollPanel
                     ref={favouriteMessagesPanelRef!}
                     className="mx_RoomView_searchResultsPanel mx_FavouriteMessages_scrollPanel"
@@ -61,7 +60,5 @@ const FavouriteMessagesPanel = (props: IProps) => {
             </>
         );
     }
-
-    return <>{favouriteMessagesPanel}</>;
 };
 export default FavouriteMessagesPanel;

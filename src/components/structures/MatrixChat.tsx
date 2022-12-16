@@ -138,6 +138,7 @@ import { VoiceBroadcastResumer } from "../../voice-broadcast";
 import GenericToast from "../views/toasts/GenericToast";
 import { Linkify } from "../views/elements/Linkify";
 import RovingSpotlightDialog, { Filter } from "../views/dialogs/spotlight/SpotlightDialog";
+import ConfirmClearDialog from "./FavouriteMessagesView/ConfirmClearDialog";
 
 // legacy export
 export { default as Views } from "../../Views";
@@ -738,6 +739,10 @@ export default class MatrixChat extends React.PureComponent<IProps, IState> {
 
                 // View the welcome or home page if we need something to look at
                 this.viewSomethingBehindModal();
+                break;
+            }
+            case Action.OpenClearModal: {
+                Modal.createDialog(ConfirmClearDialog);
                 break;
             }
             case "view_welcome_page":

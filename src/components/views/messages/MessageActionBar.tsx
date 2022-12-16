@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactElement, useCallback, useContext, useEffect } from "react";
+import React, {ReactElement, useCallback, useContext, useEffect, useState} from "react";
 import { EventStatus, MatrixEvent, MatrixEventEvent } from "matrix-js-sdk/src/models/event";
 import classNames from "classnames";
 import { MsgType, RelationType } from "matrix-js-sdk/src/@types/event";
@@ -276,10 +276,14 @@ interface IFavouriteButtonProp {
 }
 
 const FavouriteButton = ({ mxEvent }: IFavouriteButtonProp) => {
-    const { isFavourite, toggleFavourite } = useFavouriteMessages({ mxEvent });
+    const { isFavourite, toggleFavourite, onFavouritesChanged } = useFavouriteMessages();
+    const [, forceRefresh] = useState([]);
+
+    onFavouritesChanged(() => forceRefresh([]));
+
     const eventId = mxEvent.getId();
     const classes = classNames("mx_MessageActionBar_iconButton", {
-        mx_MessageActionBar_favouriteButton_fillstar: isFavourite(),
+        mx_MessageActionBar_favouriteButton_fillstar: isFavourite(mxEvent.getId()),
     });
 
     const onClick = useCallback(
@@ -288,9 +292,9 @@ const FavouriteButton = ({ mxEvent }: IFavouriteButtonProp) => {
             e.preventDefault();
             e.stopPropagation();
 
-            toggleFavourite();
+            toggleFavourite(mxEvent);
         },
-        [toggleFavourite],
+        [mxEvent, toggleFavourite],
     );
 
     return (

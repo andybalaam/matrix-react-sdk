@@ -15,13 +15,9 @@ limitations under the License.
 */
 
 import { IContent, MatrixEvent } from "matrix-js-sdk/src/models/event";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
-interface IButtonProp {
-    mxEvent?: MatrixEvent;
-}
-
-interface FavouriteStorage {
+export interface FavouriteStorage {
     eventId: string;
     roomId: string;
     content: IContent;
@@ -48,24 +44,22 @@ function clearFavourites(): void {
     localStorage.removeItem("io_element_favouriteMessages");
 }
 
-export default function useFavouriteMessages(props?: IButtonProp) {
+export default function useFavouriteMessages() {
     if (ioElementFavouriteMessages === null) {
         ioElementFavouriteMessages = loadFavourites();
     }
 
-    const sortState = useRef(false);
-    const isSearchClicked = useRef(false);
+    const favChange = useRef(null);
 
-    const [, setX] = useState<string[]>();
-    const eventId = props?.mxEvent.getId();
-    const roomId = props?.mxEvent.getRoomId();
-    const content = props?.mxEvent.getContent();
-
-    const isFavourite = (): boolean => {
+    const isFavourite = (eventId: string): boolean => {
         return ioElementFavouriteMessages.some((f) => f.eventId === eventId);
     };
 
-    const toggleFavourite = () => {
+    const toggleFavourite = (mxEvent: MatrixEvent) => {
+        const eventId = mxEvent.getId();
+        const roomId = mxEvent.getRoomId();
+        const content = mxEvent.getContent();
+
         const idx = ioElementFavouriteMessages.findIndex((f) => f.eventId === eventId);
 
         if (idx !== -1) {
@@ -75,38 +69,27 @@ export default function useFavouriteMessages(props?: IButtonProp) {
         }
 
         saveFavourites();
-
-        // Force a re-render
-        setX([]);
-    };
-
-    const reorderFavouriteMessages = () => {
-        sortState.current = !sortState.current;
-    };
-
-    const setSearchState = (val: boolean) => {
-        isSearchClicked.current = val;
+        favChange.current?.();
     };
 
     const clearFavouriteMessages = () => {
         clearFavourites();
+        favChange.current?.();
     };
 
-    const getFavouriteMessagesIds = () => {
-        const ret = JSON.parse(JSON.stringify(ioElementFavouriteMessages));
-        if (sortState.current) {
-            ret.reverse();
-        }
-        return ret;
+    const getFavouriteMessages = (): FavouriteStorage[] => {
+        return JSON.parse(JSON.stringify(ioElementFavouriteMessages));
+    };
+
+    const onFavouritesChanged = (listener: () => void) => {
+        favChange.current = listener;
     };
 
     return {
+        getFavouriteMessages,
         isFavourite,
         toggleFavourite,
-        getFavouriteMessagesIds,
-        reorderFavouriteMessages,
         clearFavouriteMessages,
-        setSearchState,
-        isSearchClicked: isSearchClicked.current,
+        onFavouritesChanged,
     };
 }

@@ -17,7 +17,6 @@ limitations under the License.
 import { MatrixClient, MatrixEvent } from "matrix-js-sdk/src/matrix";
 import React from "react";
 
-import useFavouriteMessages from "../../../hooks/useFavouriteMessages";
 import { _t } from "../../../languageHandler";
 import Spinner from "../../views/elements/Spinner";
 import FavouriteMessageTile from "./FavouriteMessageTile";
@@ -36,8 +35,6 @@ const FavouriteMessagesTilesList = ({
     favouriteMessagesPanelRef,
     searchQuery,
 }: IProps) => {
-    const { isSearchClicked } = useFavouriteMessages();
-
     const ret: JSX.Element[] = [];
     let lastRoomId: string;
     const highlights: string[] = [];
@@ -51,7 +48,7 @@ const FavouriteMessagesTilesList = ({
             const room = cli?.getRoom(roomId);
 
             timeline.push(mxEvent);
-            if (searchQuery && isSearchClicked) {
+            if (searchQuery) {
                 highlights.push(searchQuery);
             }
 

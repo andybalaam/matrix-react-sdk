@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { Action } from "../../../dispatcher/actions";
 import defaultDispatcher from "../../../dispatcher/dispatcher";
@@ -23,22 +23,17 @@ import { _t } from "../../../languageHandler";
 import RoomAvatar from "../../views/avatars/RoomAvatar";
 import AccessibleTooltipButton from "../../views/elements/AccessibleTooltipButton";
 
-const FavouriteMessagesHeader = ({ handleSearchQuery }) => {
-    const { reorderFavouriteMessages, setSearchState, getFavouriteMessagesIds } = useFavouriteMessages();
-    const favouriteMessagesIds = getFavouriteMessagesIds();
+interface IProps {
+    query?: string;
+    handleSearchQuery: (query: string) => void;
+}
+
+const FavouriteMessagesHeader = ({ query, handleSearchQuery }: IProps) => {
+    const { getFavouriteMessages } = useFavouriteMessages();
+    const favouriteMessagesIds = getFavouriteMessages();
 
     const [isSearchClicked, setSearchClicked] = useState<boolean>(false);
-    const [query, setQuery] = useState<string>();
-
-    useEffect(() => {
-        handleSearchQuery(query);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [query]);
-
-    useEffect(() => {
-        setSearchState(isSearchClicked);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isSearchClicked]);
+    const [sortAscending, setSortAscending] = useState<boolean>();
 
     const onClearClick = () => {
         if (favouriteMessagesIds.length > 0) {
@@ -61,32 +56,33 @@ const FavouriteMessagesHeader = ({ handleSearchQuery }) => {
                     <span>Favourite Messages</span>
                 </div>
                 <div className="mx_FavMessagesHeader_Wrapper_right">
-                    {isSearchClicked && (
-                        <input
-                            type="text"
-                            className="mx_FavMessagesHeader_Search"
-                            placeholder="Search..."
-                            onChange={(e) => setQuery(e.target.value)}
-                        />
-                    )}
-                    {!isSearchClicked ? (
-                        <AccessibleTooltipButton
-                            className="mx_RoomHeader_button mx_RoomHeader_searchButton"
-                            onClick={() => setSearchClicked(!isSearchClicked)}
-                            title={_t("Search")}
-                            key="search"
-                        />
+                    {isSearchClicked ? (
+                        <>
+                            <input
+                                type="text"
+                                className="mx_FavMessagesHeader_Search"
+                                placeholder="Search..."
+                                onChange={(e) => handleSearchQuery(e.target.value)}
+                                value={query ?? ""}
+                            />
+                            <AccessibleTooltipButton
+                                className="mx_FavMessagesHeader_cancelButton"
+                                onClick={() => setSearchClicked(false)}
+                                title={_t("Cancel")}
+                                key="cancel"
+                            />
+                        </>
                     ) : (
                         <AccessibleTooltipButton
-                            className="mx_FavMessagesHeader_cancelButton"
-                            onClick={() => setSearchClicked(!isSearchClicked)}
-                            title={_t("Cancel")}
-                            key="cancel"
+                            className="mx_RoomHeader_button mx_RoomHeader_searchButton"
+                            onClick={() => setSearchClicked(true)}
+                            title={_t("Search")}
+                            key="search"
                         />
                     )}
                     <AccessibleTooltipButton
                         className="mx_RoomHeader_button mx_FavMessagesHeader_sortButton"
-                        onClick={() => reorderFavouriteMessages()}
+                        onClick={() => setSortAscending(!sortAscending)}
                         title={_t("Reorder")}
                         key="reorder"
                     />

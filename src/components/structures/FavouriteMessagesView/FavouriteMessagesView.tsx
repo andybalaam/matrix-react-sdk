@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { MatrixClient, MatrixEvent, RelationType } from "matrix-js-sdk/src/matrix";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import MatrixClientContext from "../../../contexts/MatrixClientContext";
-import { useAsyncMemo } from "../../../hooks/useAsyncMemo";
-import useFavouriteMessages from "../../../hooks/useFavouriteMessages";
+import useFavouriteMessages, { FavouriteStorage } from "../../../hooks/useFavouriteMessages";
 import ResizeNotifier from "../../../utils/ResizeNotifier";
 import FavouriteMessagesPanel from "./FavouriteMessagesPanel";
 
@@ -28,84 +27,74 @@ interface IProps {
     resizeNotifier?: ResizeNotifier;
 }
 
-//temporary container for current messageids after filtering
-let temp = JSON.parse(localStorage?.getItem("io_element_favouriteMessages") ?? "[]") as any[];
-
-let searchQuery: string;
-
 const FavouriteMessagesView = ({ resizeNotifier }: IProps) => {
-    const { getFavouriteMessagesIds, isSearchClicked } = useFavouriteMessages();
-    const favouriteMessagesIds = getFavouriteMessagesIds();
-
     const cli = useContext<MatrixClient>(MatrixClientContext);
-    const [, setX] = useState<string[]>();
 
-    //not the best solution, temporary implementation till a better approach comes up
-    const handleSearchQuery = (query: string) => {
-        if (query?.length === 0 || query?.length > 2) {
-            temp = favouriteMessagesIds.filter((evtObj) => evtObj.content.body.trim().toLowerCase().includes(query));
-            searchQuery = query;
+    function filterFavourites(searchQuery: string, favouriteMessages: FavouriteStorage[]): FavouriteStorage[] {
+        return favouriteMessages.filter((f) => f.content.body.trim().toLowerCase().includes(searchQuery));
+    }
 
-            //force rerender
-            setX([]);
+    /** If the event was edited, update it with the replacement content */
+    async function updateEventIfEdited(event: MatrixEvent) {
+        const roomId = event.getRoomId();
+        const eventId = event.getId();
+        const { events } = await cli.relations(roomId, eventId, RelationType.Replace, null, { limit: 1 });
+        const editEvent = events?.length > 0 ? events[0] : null;
+        if (editEvent) {
+            event.makeReplaced(editEvent);
         }
+    }
+
+    async function fetchEvent(favourite: FavouriteStorage): Promise<MatrixEvent | null> {
+        try {
+            const evJson = await cli.fetchRoomEvent(favourite.roomId, favourite.eventId);
+            const event = new MatrixEvent(evJson);
+            const roomId = event?.getRoomId();
+            const room = roomId ? cli.getRoom(roomId) : null;
+            if (!event || !room) {
+                return null;
+            }
+
+            // Decrypt the event
+            if (event.isEncrypted()) {
+                // Modifies the event in-place (!)
+                await cli.decryptEventIfNeeded(event);
+            }
+
+            // Inject sender information
+            event.sender = room.getMember(event.getSender())!;
+
+            await updateEventIfEdited(event);
+
+            return event;
+        } catch (err) {
+            logger.error(err);
+            return null;
+        }
+    }
+
+    async function calcEvents(searchQuery: string, favouriteMessages: FavouriteStorage[]): Promise<MatrixEvent[]> {
+        const displayedFavourites = filterFavourites(searchQuery, favouriteMessages);
+        return Promise.all(displayedFavourites.map(fetchEvent).filter((e) => e != null));
+    }
+
+    const { getFavouriteMessages, onFavouritesChanged } = useFavouriteMessages();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [events, setEvents] = useState(async () => {
+        const events = await calcEvents(searchQuery, getFavouriteMessages());
+        return events;
+    });
+
+    onFavouritesChanged(async () => {
+        setEvents(async () => await calcEvents(searchQuery, getFavouriteMessages()));
+    });
+
+    const handleSearchQuery = (query: string) => {
+        setSearchQuery(query);
     };
 
-    useEffect(() => {
-        if (!isSearchClicked) {
-            searchQuery = "";
-            temp = favouriteMessagesIds;
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isSearchClicked]);
-
-    const favouriteMessageEvents = useAsyncMemo(
-        () => {
-            const currentFavMessageIds = temp.length < favouriteMessagesIds.length ? temp : favouriteMessagesIds;
-
-            const promises = currentFavMessageIds.map(async (resultObj) => {
-                try {
-                    // Fetch the events and latest edit in parallel
-                    const [
-                        evJson,
-                        {
-                            events: [edit],
-                        },
-                    ] = await Promise.all([
-                        cli.fetchRoomEvent(resultObj.roomId, resultObj.eventId),
-                        cli.relations(resultObj.roomId, resultObj.eventId, RelationType.Replace, null, { limit: 1 }),
-                    ]);
-                    const event = new MatrixEvent(evJson);
-                    const roomId = event.getRoomId()!;
-                    const room = cli.getRoom(roomId);
-
-                    if (event.isEncrypted()) {
-                        await cli.decryptEventIfNeeded(event);
-                    }
-
-                    if (event) {
-                        // Inject sender information
-                        event.sender = room.getMember(event.getSender())!;
-
-                        // Also inject any edits found
-                        if (edit) event.makeReplaced(edit);
-
-                        return event;
-                    }
-                } catch (err) {
-                    logger.error(err);
-                }
-                return null;
-            });
-
-            return Promise.all(promises);
-        },
-        [cli, favouriteMessagesIds],
-        null,
-    );
-
     const props = {
-        favouriteMessageEvents,
+        events,
         resizeNotifier,
         searchQuery,
         handleSearchQuery,
